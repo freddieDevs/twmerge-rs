@@ -1,5 +1,99 @@
 #![allow(unused)]
 use strum::{Display, EnumIter, EnumString};
+use std::{collections::HashMap};
+
+//represents the static part of the Tailwind Merge Config
+#[derive(Debug, Clone)]
+pub struct ConfigStaticPart {
+  /// Integer indicating the size of the LRU cache
+  pub cache_size: usize,
+  /// Optional prefix
+  pub prefix: Option<String>, 
+  // Custom separator for tailwind class modifiers
+  pub separator: String, 
+  // Experimental function for parsing class names
+  pub experimental_parse_class_name: Option<fn(&ExperimentalParseClassName) -> ExperimentalParsedClassName>,
+}
+
+// Parameters for the experimental class name parsing function
+#[derive(Debug, Clone)]
+pub struct ExperimentalParseClassName {
+  pub class_name: String, 
+  pub parse_class_name: fn(&str) -> ExperimentalParseClassName,
+}
+
+// Result for experimental class name parsing
+#[derive(Debug, Clone)]
+pub struct ExperimentalParsedClassName {
+  pub modifiers: Vec<String>,
+  pub has_important_modifier: bool,
+  pub base_class_name: String,
+  pub maybe_postfix_modifier_position: Option<usize>,
+}
+
+// Represents the dynamic part
+#[derive(Debug, Clone)]
+pub struct ConfigGroupsPart<ClassGroupIds, ThemeGroupIds> 
+where  
+  ClassGroupIds: Eq + std::hash::Hash,
+  ThemeGroupIds: Eq + std::hash::Hash,
+{
+  // Theme scales used in class groups
+  pub theme: HashMap<ThemeGroupIds, ClassGroup<ThemeGroupIds>>,
+  // Object mapping class group ids to their classes.
+  pub class_groups: HashMap<ClassGroupIds, ClassGroup<ThemeGroupIds>>,
+  // Conflicting class groups
+  pub conflicting_class_groups: HashMap<ClassGroupIds, Vec<ClassGroupIds>>,
+  // Conflicting class group modifiers 
+  pub conflicting_class_group_modifiers: HashMap<ClassGroupIds, Vec<ClassGroupIds>>,
+}
+
+// Represents the entire tailwind merge configuration
+#[derive(Debug, Clone)]
+pub struct Config<ClassGroupIds, ThemeGroupIds>
+where 
+  ClassGroupIds: Eq + std::hash::Hash,
+  ThemeGroupIds: Eq + std::hash::Hash,  
+{
+  pub static_part: ConfigStaticPart,
+  pub groups_part: ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>,
+}
+
+// Extension configuration for Tailwind Merge
+#[derive(Debug, Clone)]
+pub struct ConfigExtension<ClassGroupIds, ThemeGroupIds> 
+where 
+  ClassGroupIds: Eq + std::hash::Hash,
+  ThemeGroupIds: Eq + std::hash::Hash, 
+{
+  pub override_part: Option<ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>>,
+  pub extend_part: Option<ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>>,
+}
+
+// Theme object containing class groups
+pub type ThemeObject<ThemeGroupIds> = HashMap<ThemeGroupIds, ClassGroup<ThemeGroupIds>>;
+
+// class groups definition
+pub type ClassGroup<ThemeGroupIds> = Vec<ClassDefinition<ThemeGroupIds>>;
+
+// Enum defining the possible types of class definitiions
+#[derive(Debug, Clone)]
+pub enum ClassDefinition<ThemeGroupIds> {
+  String(String), 
+  ClassValidator(fn(&str)-> bool),
+  ThemeGetter(ThemeGetter), 
+  ClassObject(HashMap<String, Vec<ClassDefinition<ThemeGroupIds>>>),
+}
+
+// funtion type for retrieving theme-based class groups
+#[derive(Debug, Clone)]
+pub struct ThemeGetter {
+  pub function: fn(&ThemeObject<String>) -> ClassGroup<String>,
+  pub is_theme_getter: bool,
+} 
+
+// Disables the type inference 
+pub struct NoInfer<T>(pub T);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumString, EnumIter, Display)]
 #[strum(serialize_all = "camelCase")]
