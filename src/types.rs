@@ -1,6 +1,7 @@
+#![allow(unused)]
 use strum::{Display, EnumIter, EnumString};
 
-#[derive(Debug, Clone, Copy, PartilaEq, Eq, Hash, EnumString, EnumIter, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumString, EnumIter, Display)]
 #[strum(serialize_all = "camelCase")]
 pub enum DefaultThemeGroupIds {
   Blur,

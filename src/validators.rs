@@ -1,51 +1,62 @@
-use lazy_regex::regex;
+#![allow(unused)]
+use lazy_regex::{regex, lazy_regex};
 use std::collections::HashSet;
+use once_cell::sync::Lazy;
 
 //matches arbitrary values like '[prefix:value]'
-pub static  ARBITRARY_VALUE_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^\[(?:([a-z-]+):)?(.+)\]$");
+pub static  ARBITRARY_VALUE_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^\[(?:([a-z-]+):)?(.+)\]$");
 
 // Matches fractions like `1/2`, `3/4`
-pub static FRACTION_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^\d+/\d+$");
+pub static FRACTION_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^\d+/\d+$");
 
 // Predefined string lengths
-pub fn string_lengths() -> HashSet<&'static str> {
-  let mut string_set = HashSet::new();
-  string_set.insert("px");
-  string_set.insert("full");
-  string_set.insert("screen");
-  string_set
-}
+// pub fn string_lengths() -> HashSet<&'static str> {
+//   let mut string_set = HashSet::new();
+//   string_set.insert("px");
+//   string_set.insert("full");
+//   string_set.insert("screen");
+//   string_set
+// }
+pub static STRING_LENGTHS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+  HashSet::from(["px", "full", "screen"])
+});
 
-pub fn size_labels() -> HashSet<&'static str> {
-  let mut size_set = HashSet::new();
-  size_set.insert("length");
-  size_set.insert("size");
-  size_set.insert("percentage");
-}
+// pub fn size_labels() -> HashSet<&'static str> {
+//   let mut size_set = HashSet::new();
+//   size_set.insert("length");
+//   size_set.insert("size");
+//   size_set.insert("percentage");
+// }
+pub static SIZE_LABELS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+  HashSet::from(["length", "size", "percentage"])
+});
 
-pub fn image_labels() -> HashSet<&'static str> {
-  let mut image_set = HashSet::new();
-  image_set.insert("image");
-  image_set.insert("url");
-}
+// pub fn image_labels() -> HashSet<&'static str> {
+//   let mut image_set = HashSet::new();
+//   image_set.insert("image");
+//   image_set.insert("url");
+// }
+pub static IMAGE_LABELS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+  HashSet::from(["image", "url"])
+});
 
 // Matches t-shirt size units like `2xl`, `md`, `lg`
-pub static TSHIRT_UNIT_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$");
+pub static TSHIRT_UNIT_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$");
 
 // Matches valid length units like `px`, `rem`, `vh`, etc.
-pub static LENGTH_UNIT_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$");
+pub static LENGTH_UNIT_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$");
 
 // Matches valid CSS color functions like `rgb(...)`, `hsl(...)`, `lab(...)`
-pub static COLOR_FUNCTION_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^(rgba?|hsla?|hwb|(ok)?(lab|lch))\(.+\)$");
+pub static COLOR_FUNCTION_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^(rgba?|hsla?|hwb|(ok)?(lab|lch))\(.+\)$");
 
 // Matches box shadows like `inset_4px_4px`
-pub static SHADOW_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)");
+pub static SHADOW_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)");
 
 // Matches image-related functions like `url(...)`, `linear-gradient(...)`
-pub static IMAGE_REGEX: lazy_regex::Lazy<regex::Regex> = regex!(r"^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$");
+pub static IMAGE_REGEX: lazy_regex::Lazy<regex::Regex> = lazy_regex!(r"^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$");
 
 pub fn is_length(value: &str) -> bool {
-  is_number(value) || string_lengths().contains(value) || FRACTION_REGEX.is_match(value)
+  is_number(value) || STRING_LENGTHS.contains(value) || FRACTION_REGEX.is_match(value)
 }
 
 pub fn is_number(value: &str) -> bool {
@@ -73,7 +84,7 @@ pub fn is_tshirt_size(value: &str) -> bool {
 }
 
 pub fn is_arbitrary_number(value: &str) -> bool {
-  get_is_arbitrary_value(value, "number", is_number(value))
+  get_is_arbitrary_value(value, "number", is_number)
 }
 
 pub fn is_arbitrary_length(value: &str) -> bool {
@@ -81,11 +92,11 @@ pub fn is_arbitrary_length(value: &str) -> bool {
 }
 
 pub fn is_arbitrary_size(value: &str) -> bool {
-  get_is_arbitrary_value(value, "size-labels", is_never())
+  get_is_arbitrary_value(value, "size-labels", is_never)
 }
 
 pub fn is_arbitrary_position(value: &str) -> bool {
-  get_is_arbitrary_value(value, "position", test_value)
+  get_is_arbitrary_value(value, "position", is_never)
 }
 
 pub fn is_arbitrary_image(value: &str) -> bool {
@@ -96,7 +107,7 @@ pub fn is_arbitrary_shadow(value: &str) -> bool {
   get_is_arbitrary_value(value, " ", is_shadow)
 }
 
-pub fn get_is_arbitrary_value(
+pub fn get_is_arbitrary_value<F>(
   value: &str,
   label: &str,
   test_value: F,
@@ -119,7 +130,7 @@ pub fn is_length_only(value: &str) -> bool {
   LENGTH_UNIT_REGEX.is_match(value) && !COLOR_FUNCTION_REGEX.is_match(value)
 }
 
-pub fn is_never() -> bool {
+pub fn is_never(_: &str) -> bool {
   false
 }
 

@@ -143,6 +143,7 @@ name = "twmerge-rs"
 version = "0.1.0"
 dependencies = [
  "lazy-regex",
+ "once_cell",
  "strum",
 ]
 
