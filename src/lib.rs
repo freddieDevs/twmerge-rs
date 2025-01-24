@@ -1,17 +1,33 @@
+#![allow(unused)]
 mod validators;
 mod types;
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use validators::is_length;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    use super::*;
+    fn test_is_length() {
+        assert_eq!(is_length("1"), true);
+        assert_eq!(is_length("1023713"), true);
+        assert_eq!(is_length("1.5"), true);
+        assert_eq!(is_length("1145.67597"), true);
+        assert_eq!(is_length("px"), true);
+        assert_eq!(is_length("full"), true);
+        assert_eq!(is_length("screen"), true);
+        assert_eq!(is_length("3/4"), true);
+        assert_eq!(is_length("25/66"), true);
+
+        assert_eq!(is_length("[6.9%]"), false);
+        assert_eq!(is_length("[486px]"), false);
+        assert_eq!(is_length("[45.5rem]"), false);
+        assert_eq!(is_length("[57vw]"), false);
+        assert_eq!(is_length("[75vh]"), false);
+        assert_eq!(is_length("[length:var(--arbitrary)]"), false);
+        assert_eq!(is_length("5t7"), false);
+        assert_eq!(is_length("[1]"), false);
+        assert_eq!(is_length("[56px]"), false);
+        assert_eq!(is_length("65px]"), false);
+        assert_eq!(is_length("one"), false);
     }
 }

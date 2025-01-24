@@ -1,6 +1,6 @@
 #![allow(unused)]
 use strum::{Display, EnumIter, EnumString};
-use std::{collections::HashMap};
+use std::{collections::HashMap, fmt::Debug, hash::Hash, marker::PhantomData};
 
 //represents the static part of the Tailwind Merge Config
 #[derive(Debug, Clone)]
@@ -35,8 +35,8 @@ pub struct ExperimentalParsedClassName {
 #[derive(Debug, Clone)]
 pub struct ConfigGroupsPart<ClassGroupIds, ThemeGroupIds> 
 where  
-  ClassGroupIds: Eq + std::hash::Hash,
-  ThemeGroupIds: Eq + std::hash::Hash,
+  ClassGroupIds: Eq + Hash + Clone + Debug,
+  ThemeGroupIds: Eq + Hash + Clone + Debug,
 {
   // Theme scales used in class groups
   pub theme: HashMap<ThemeGroupIds, ClassGroup<ThemeGroupIds>>,
@@ -52,8 +52,8 @@ where
 #[derive(Debug, Clone)]
 pub struct Config<ClassGroupIds, ThemeGroupIds>
 where 
-  ClassGroupIds: Eq + std::hash::Hash,
-  ThemeGroupIds: Eq + std::hash::Hash,  
+  ClassGroupIds: Eq + Hash + Clone + Debug,
+  ThemeGroupIds: Eq + Hash + Clone + Debug,  
 {
   pub static_part: ConfigStaticPart,
   pub groups_part: ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>,
@@ -63,8 +63,8 @@ where
 #[derive(Debug, Clone)]
 pub struct ConfigExtension<ClassGroupIds, ThemeGroupIds> 
 where 
-  ClassGroupIds: Eq + std::hash::Hash,
-  ThemeGroupIds: Eq + std::hash::Hash, 
+  ClassGroupIds: Eq + Hash + Clone + Debug,
+  ThemeGroupIds: Eq + Hash + Clone + Debug, 
 {
   pub override_part: Option<ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>>,
   pub extend_part: Option<ConfigGroupsPart<ClassGroupIds, ThemeGroupIds>>,
@@ -78,11 +78,12 @@ pub type ClassGroup<ThemeGroupIds> = Vec<ClassDefinition<ThemeGroupIds>>;
 
 // Enum defining the possible types of class definitiions
 #[derive(Debug, Clone)]
-pub enum ClassDefinition<ThemeGroupIds> {
+pub enum ClassDefinition<ThemeGroupIds: Clone + Debug> {
   String(String), 
   ClassValidator(fn(&str)-> bool),
   ThemeGetter(ThemeGetter), 
   ClassObject(HashMap<String, Vec<ClassDefinition<ThemeGroupIds>>>),
+  _MARKER(PhantomData<ThemeGroupIds>),
 }
 
 // funtion type for retrieving theme-based class groups
@@ -94,6 +95,17 @@ pub struct ThemeGetter {
 
 // Disables the type inference 
 pub struct NoInfer<T>(pub T);
+
+pub type AnyClassGroupIds = String;
+
+pub type AnyThemeGroupIds = String;
+
+// pub struct Config<C, T> {
+//   class_group_id: C,
+//   theme_group_id: T,
+// }
+
+pub type AnyConfig = Config<AnyClassGroupIds, AnyThemeGroupIds>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumString, EnumIter, Display)]
 #[strum(serialize_all = "camelCase")]
@@ -410,13 +422,3 @@ pub enum DefaultClassGroupIds {
   Z
 }
 
-pub type AnyClassGroupIds = String;
-
-pub type AnyThemeGroupIds = String;
-
-pub struct Config<C, T> {
-  class_group_id: C,
-  theme_group_id: T,
-}
-
-pub type AnyConfig = Config<AnyClassGroupIds, AnyThemeGroupIds>;
