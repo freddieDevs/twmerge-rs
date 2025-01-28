@@ -1,6 +1,6 @@
 #![allow(unused)]
 use strum::{Display, EnumIter, EnumString};
-use std::{collections::HashMap, fmt::Debug, hash::Hash, marker::PhantomData};
+use std::{collections::HashMap, fmt::{Debug, Formatter}, hash::Hash, marker::PhantomData, sync::Arc};
 
 //represents the static part of the Tailwind Merge Config
 #[derive(Debug, Clone)]
@@ -81,17 +81,26 @@ pub type ClassGroup<ThemeGroupIds> = Vec<ClassDefinition<ThemeGroupIds>>;
 pub enum ClassDefinition<ThemeGroupIds: Clone + Debug> {
   String(String), 
   ClassValidator(fn(&str)-> bool),
-  ThemeGetter(ThemeGetter), 
+  ThemeGetter(ThemeGetter<ThemeGroupIds>), 
   ClassObject(HashMap<String, Vec<ClassDefinition<ThemeGroupIds>>>),
   _MARKER(PhantomData<ThemeGroupIds>),
 }
 
 // funtion type for retrieving theme-based class groups
-#[derive(Debug, Clone)]
-pub struct ThemeGetter {
-  pub function: fn(&ThemeObject<String>) -> ClassGroup<String>,
+#[derive(Clone)]
+pub struct ThemeGetter<ThemeGroupIds: Debug + Clone> {
+  pub function: Arc<dyn Fn(&ThemeObject<ThemeGroupIds>) -> ClassGroup<ThemeGroupIds> + Send + Sync>,
   pub is_theme_getter: bool,
 } 
+
+//manually implementing the Debug for ThemeGetter
+impl<ThemeGroupIds: Debug + Clone> Debug for ThemeGetter<ThemeGroupIds> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ThemeGetter")
+      .field("is_theme_getter", &self.is_theme_getter)
+      .finish() //avoid trying to debug the fn
+  }
+}
 
 // Disables the type inference 
 pub struct NoInfer<T>(pub T);

@@ -1,6 +1,8 @@
 #![allow(unused)]
 mod validators;
 mod types;
+mod default_config;
+mod from_theme;
 
 #[cfg(test)]
 mod tests {
